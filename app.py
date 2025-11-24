@@ -72,6 +72,16 @@ def home():
 # LOCAL DEVELOPMENT
 # --------------------------
 
+# --------------------------
+# TEMPORARY: Initialize DB tables ONCE
+# --------------------------
+@app.route('/init-db')
+def init_db():
+    with app.app_context():
+        db.create_all()
+    return "Database tables created successfully!"
+
+
 if __name__ == "__main__":
     # Allows running locally using local MySQL if you want
     print("Running in LOCAL mode — using Render DB unless overridden...")
