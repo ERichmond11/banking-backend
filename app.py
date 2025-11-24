@@ -13,37 +13,39 @@ app = Flask(__name__)
 # --------------------------
 # DATABASE CONFIG
 # --------------------------
-# Render automatically sets DATABASE_URL
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise Exception("DATABASE_URL is missing — Add it in Render Dashboard!")
 
-# Fix for SQLAlchemy + Render format
+# Render PostgreSQL fix: Convert postgres:// to postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Prevent PostgreSQL timeouts
+# Prevent idle connections from crashing on Render
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
-    "pool_recycle": 180,
+    "pool_recycle": 300,
 }
 
 # --------------------------
 # SECURITY CONFIG
 # --------------------------
+
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "jwtsecretkey")
 
-# Allow frontend to access backend
+# Allow frontend to connect
 CORS(app)
 
 # --------------------------
-# EXTENSIONS INIT
+# INIT EXTENSIONS
 # --------------------------
+
 db.init_app(app)
 bcrypt.init_app(app)
 jwt = JWTManager(app)
@@ -51,6 +53,7 @@ jwt = JWTManager(app)
 # --------------------------
 # BLUEPRINTS
 # --------------------------
+
 from routes.auth_routes import auth_blueprint
 from routes.account_routes import account_blueprint
 
@@ -60,12 +63,16 @@ app.register_blueprint(account_blueprint)
 # --------------------------
 # ROOT ENDPOINT
 # --------------------------
+
 @app.route("/")
 def home():
-    return "Emmanuel's Banking API is LIVE (Render Deployment Successful)"
+    return "Emmanuel's Banking API is LIVE 🚀"
 
 # --------------------------
-# LOCAL ONLY
+# LOCAL DEVELOPMENT
 # --------------------------
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Allows running locally using local MySQL if you want
+    print("Running in LOCAL mode — using Render DB unless overridden...")
+    app.run(debug=True, port=5000)
